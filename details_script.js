@@ -1,14 +1,11 @@
-/**
- * Digital Account Price List - Details Page Script
- * Fetches data (prioritizing local cache) and displays detailed plan cards for a single tool.
- */
+// [details_script.js file එකේ මුල් කොටස වෙනස් කරන්න]
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🔥 1. CONFIGURATION VARIABLES
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyefFSmfSyLRqrQOoTbv5dKT0ncljBJs_uN-KHka98ZnUc9IoYvrLBDkFyII1-7ScS89A/exec'; 
+    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyefFSmfSyLRqrQOoTbv5dKT0ncljBJs_uN-KHka98ZnUc9IoYvrLBDkFyII1-7ScS89A/exec';
     const CACHE_KEY = 'digitalPriceCache';
-    const CACHE_EXPIRY = 3600000; // 1 hour (Matching script.js)
-    
+    // CACHE_EXPIRY script.js එකෙන් පාලනය වේ
+
     const container = document.getElementById('plans-container');
     const toolNameHeader = document.getElementById('tool-name-header');
     
@@ -19,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isReseller = role === 'reseller'; 
     
     // Back Link එක සකස් කිරීම
-    const backLink = document.getElementById('back-to-home-link');
+    const backLink = document.querySelector('.back-link'); // Class එක භාවිත කරයි
     if (backLink) {
         backLink.href = isReseller ? 'index.html?role=reseller' : 'index.html';
     }
@@ -28,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!toolName) {
         toolNameHeader.textContent = 'වැරදි සබැඳිය (Invalid Link)';
         container.innerHTML = '<p style="text-align: center;">විස්තර බැලීමට Tool එකක් තෝරන්න.</p>';
-        hideLoader();
+        hideLoader(); // Error එකකදී Loader එක Hide කරන්න
         return;
     }
 
@@ -129,20 +126,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, version } = JSON.parse(cachedItem);
         // Cache එකෙන් ක්ෂණිකව Load කිරීම
         renderPlans({prices: data, version: version});
+        hideLoader(); // 🔥 Cache තිබේ නම් වහාම Loader එක Hide කරයි
     }
 
-    // Cache එකක් තිබුණත් නැතත්, අලුත් දත්ත Fetch කරන්න.
+    // Cache එකක් තිබුණත් නැතත්, අලුත් දත්ත Fetch කරන්න (පසුබිමෙන්)
     fetch(DATA_URL)
         .then(response => {
             if (!response.ok) throw new Error('Network response not ok');
             return response.json();
         })
         .then(data => {
-            // Apps Script එකෙන් prices සහ version ලැබේ
             const cachedItem = localStorage.getItem(CACHE_KEY);
             const currentCacheVersion = cachedItem ? JSON.parse(cachedItem).version : '0.0';
 
-            // Version එක Check කරන්න - අලුත් Version එකක් නම් හෝ Cache එකක් නැත්නම් Render කරන්න
+            // Version එක Check කරන්න - අලුත් Version එකක් නම් Cache කරන්න
             if (!cachedItem || (data.version && data.version > currentCacheVersion)) {
                 
                 // අලුත් දත්ත Cache කරන්න
@@ -153,9 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
                 
-                // අලුත් දත්ත වලින් Page එක Render කරන්න (Loader එක අනිවාර්යයෙන්ම hide වේ)
+                // අලුත් දත්ත වලින් Page එක Render කරන්න
                 renderPlans(data);
             }
+            // 🔥 Loader එක Hide කරන්නේ මෙතන නෙවෙයි, මුලින්ම Cache Load කළේ නම්
+            
         })
         .catch(error => {
             console.error('Error fetching latest data or rendering:', error);
@@ -164,7 +163,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
         .finally(() => {
-             // Cache තිබ්බත් නැතත්, අවසානයේ Loader එක Hide කරන්න
-             hideLoader();
+             // 🔥 Error එකක් ආවත්, Cache තිබුණත් නැතත්, අවසානයේ Loader එක Hide කරයි
+             if (!cachedItem) { // Cache එකක් මුලින්ම තිබුණේ නැත්නම් විතරක් Loader එක Hide කරයි
+                 hideLoader();
+             }
         });
 });
