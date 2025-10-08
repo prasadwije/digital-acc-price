@@ -113,8 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML += cardHtml;
             });
         })
+        
+
+
+/* ... details_script.js file එකේ fetch block එකේ අවසානයට මේක එකතු කරන්න ... */
+
+        
         .catch(error => {
             console.error('Error fetching data:', error);
             container.innerHTML = `<p style="color: red; text-align: center;">දත්ත පෙන්වීමේ දෝෂයක්. පසුව උත්සාහ කරන්න.</p>`;
+        })
+        .finally(() => {
+             // 🔥 Load වෙලා ඉවර වූ පසු Loader එක සඟවයි
+             hideLoader();
         });
 });

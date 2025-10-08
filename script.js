@@ -107,11 +107,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.innerHTML += tileHtml;
             }
         })
+        
+		
+		
+		
+		/* ... script.js file එකේ fetch block එකේ අවසානයට මේක එකතු කරන්න ... */
+
+        
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
             container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. කරුණාකර පසුව උත්සාහ කරන්න.</p>`;
+        })
+        .finally(() => {
+             // 🔥 Load වෙලා ඉවර වූ පසු Loader එක සඟවයි
+             hideLoader();
         });
+
 });
+
+
+/**
+ * Loading Screen එක සඟවයි. Data Load වූ පසු ක්‍රියාත්මක වේ.
+ */
+function hideLoader() {
+    const loader = document.getElementById('loading-screen');
+    if (loader) {
+        // Transition එකක් සහිතව Loader එක ඉවත් කිරීම
+        loader.classList.add('hidden');
+    }
+}
+
+// ... [ඉතිරි copyToClipboard සහ showToast functions මෙතනින් පහළට තියෙන්න ඕනේ]
 
 // ***************************************************************
 // 💡 GLOBAL TOAST NOTIFICATION FUNCTION (Alert එක වෙනුවට)
@@ -165,3 +191,4 @@ function copyToClipboard(textToCopy) {
     // 3. Temp Textarea එක ඉවත් කිරීම
     document.body.removeChild(tempInput);
 }
+
