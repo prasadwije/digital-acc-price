@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🔥 1. CONFIGURATION VARIABLES
-    const DATA_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLhkPngW2qPDpIiY0Sbh7NDt-Fx0t2AgPXaLPFJWLHOEI46Q38fKS7SmV9pmriR9qnf_Sg_pDb2SRPes2Imndyx_JBP8fnD65MubNk8GYqjY2rtoFRbVXuNfxsIlzyp6ggi8UASIT0RafktLrg7ri2GSewBchU0JzngSf_HgUZj7ZopAHMp-qBqVRrWCb4BRhYAV9ogk4twgMMIKIgLLf_8bAahgzzLzcBtd0wcNKT_LMBF4CTWIrZDp8yp6WlWKk81zGfZ55ZsCQhdVTtZRi3iZ9RuHhuEqx-xq8qIZ&lib=MqHVIVDbe7GGrYzAr3eXPOg6Ct9MHB8JG';
+    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyefFSmfSyLRqrQOoTbv5dKT0ncljBJs_uN-KHka98ZnUc9IoYvrLBDkFyII1-7ScS89A/exec';
     const CACHE_KEY = 'digitalPriceCache';
     // CACHE_EXPIRY script.js එකෙන් පාලනය වේ
 
@@ -168,4 +168,5 @@ document.addEventListener('DOMContentLoaded', () => {
                  hideLoader();
              }
         });
+
 });
