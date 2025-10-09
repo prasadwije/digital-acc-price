@@ -1,10 +1,13 @@
-// [details_script.js file එකේ මුල් කොටස වෙනස් කරන්න]
+/**
+ * Digital Account Price List - Details Page Script
+ * Fetches data directly from the fast Cloudflare Worker and displays detailed plan cards for a single tool.
+ * Local browser caching (localStorage) is NOT used, relying solely on Cloudflare cache.
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🔥 1. CONFIGURATION VARIABLES
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyefFSmfSyLRqrQOoTbv5dKT0ncljBJs_uN-KHka98ZnUc9IoYvrLBDkFyII1-7ScS89A/exec';
-    const CACHE_KEY = 'digitalPriceCache';
-    // CACHE_EXPIRY script.js එකෙන් පාලනය වේ
+    const DATA_URL = 'https://price-list-cache-proxy.prasadsandaruwan85.workers.dev/';
+    // CACHE_KEY, CACHE_EXPIRY වැනි දේ අවශ්‍ය නැත.
 
     const container = document.getElementById('plans-container');
     const toolNameHeader = document.getElementById('tool-name-header');
@@ -16,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isReseller = role === 'reseller'; 
     
     // Back Link එක සකස් කිරීම
-    const backLink = document.querySelector('.back-link'); // Class එක භාවිත කරයි
+    const backLink = document.querySelector('.back-link');
     if (backLink) {
         backLink.href = isReseller ? 'index.html?role=reseller' : 'index.html';
     }
@@ -24,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!toolName) {
         toolNameHeader.textContent = 'වැරදි සබැඳිය (Invalid Link)';
-        container.innerHTML = '<p style="text-align: center;">විස්තර බැලීමට Tool එකක් තෝරන්න.</p>';
-        hideLoader(); // Error එකකදී Loader එක Hide කරන්න
+        container.innerHTML = `<p style="text-align: center;">විස්තර බැලීමට Tool එකක් තෝරන්න.</p>`;
+        hideLoader();
         return;
     }
 
@@ -65,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // WhatsApp Message එක හදනවා
             let messageText = `Hello! I'd like to ${isReseller ? 'Reseller Order' : 'Buy'}: `;
-            // Line break fix: \n එකක් වෙනුවට \\n ලෙස යැවිය යුතුයි
             messageText += `${plan.Tool_Name} | ${plan.Plan_Tier} (${plan.Subscription_Type}) | ${plan.Duration_Months} | LKR ${numericPrice.toLocaleString('en-US')} | Ref: #${plan.Unique_ID}\\n\\nPlease send me the payment details.`;
             
             const encodedMessage = encodeURIComponent(messageText);
@@ -113,60 +115,29 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             container.innerHTML += cardHtml;
         });
-        hideLoader(); // Render වුණාට පස්සේ Loader එක Hide කරනවා
+        
+        // Render කිරීම අවසන් වූ පසු Loader එක Hide කරන්න
+        hideLoader();
     }
 
     // ----------------------------------------------------
-    // 🔥 CACHING & FETCHING LOGIC
+    // 🔥 DATA FETCHING LOGIC (Cloudflare Worker)
     // ----------------------------------------------------
     
-    const cachedItem = localStorage.getItem(CACHE_KEY);
-
-    if (cachedItem) {
-        const { data, version } = JSON.parse(cachedItem);
-        // Cache එකෙන් ක්ෂණිකව Load කිරීම
-        renderPlans({prices: data, version: version});
-        hideLoader(); // 🔥 Cache තිබේ නම් වහාම Loader එක Hide කරයි
-    }
-
-    // Cache එකක් තිබුණත් නැතත්, අලුත් දත්ත Fetch කරන්න (පසුබිමෙන්)
+    // Worker එකෙන් දත්ත අදින ප්‍රධාන Call එක
     fetch(DATA_URL)
         .then(response => {
-            if (!response.ok) throw new Error('Network response not ok');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();
         })
         .then(data => {
-            const cachedItem = localStorage.getItem(CACHE_KEY);
-            const currentCacheVersion = cachedItem ? JSON.parse(cachedItem).version : '0.0';
-
-            // Version එක Check කරන්න - අලුත් Version එකක් නම් Cache කරන්න
-            if (!cachedItem || (data.version && data.version > currentCacheVersion)) {
-                
-                // අලුත් දත්ත Cache කරන්න
-                const cacheData = {
-                    data: data.prices, // prices array එක විතරක් save කරන්න
-                    version: data.version,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-                
-                // අලුත් දත්ත වලින් Page එක Render කරන්න
-                renderPlans(data);
-            }
-            // 🔥 Loader එක Hide කරන්නේ මෙතන නෙවෙයි, මුලින්ම Cache Load කළේ නම්
-            
+            // Data ලැබුණු පසු Render කරන්න
+            renderPlans(data);
         })
         .catch(error => {
-            console.error('Error fetching latest data or rendering:', error);
-            if (!cachedItem) {
-                container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. පසුව උත්සාහ කරන්න.</p>`;
-            }
-        })
-        .finally(() => {
-             // 🔥 Error එකක් ආවත්, Cache තිබුණත් නැතත්, අවසානයේ Loader එක Hide කරයි
-             if (!cachedItem) { // Cache එකක් මුලින්ම තිබුණේ නැත්නම් විතරක් Loader එක Hide කරයි
-                 hideLoader();
-             }
+            console.error('Error fetching data:', error);
+            // Loader එක Hide කරන්න
+            hideLoader();
+            container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. කරුණාකර පසුව උත්සාහ කරන්න.</p>`;
         });
-
 });

@@ -1,11 +1,19 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const DATA_URL = 'https://script.google.com/macros/s/AKfycbyefFSmfSyLRqrQOoTbv5dKT0ncljBJs_uN-KHka98ZnUc9IoYvrLBDkFyII1-7ScS89A/exec';
-    const CACHE_KEY = 'digitalPriceCache';
-    const CACHE_EXPIRY = 3600000; // 1 hour in milliseconds
+/**
+ * Digital Account Price List - Main Script
+ * Fetches data directly from the fast Cloudflare Worker and renders product tiles.
+ * Includes Loader, Copy, and Toast functionality.
+ */
 
+document.addEventListener('DOMContentLoaded', () => {
+    // 🔥 CONFIGURATION: Cloudflare Worker URL එක මෙහි ඇත.
+    const DATA_URL = 'https://price-list-cache-proxy.prasadsandaruwan85.workers.dev/'; 
+    // Example: 'https://price-list-cache-proxy.<your-id>.workers.dev/'
+    
+    // HTML Elements
     const container = document.getElementById('products-container');
     const title = document.getElementById('page-title');
 
+    // URL Parameters (Reseller Check)
     const urlParams = new URLSearchParams(window.location.search);
     const isReseller = urlParams.get('role') === 'reseller';
 
@@ -14,21 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // දත්ත පෙන්වීම සහ Caching Logic එක ක්‍රියාත්මක කිරීම
+    // දත්ත පෙන්වීමේ ප්‍රධාන Function
     // ----------------------------------------------------
-    function processAndRenderData(data, isCached) {
+    function processAndRenderData(data) {
         // Apps Script එකෙන් එන prices array එක ගන්නවා
         const pricesData = (data && data.prices) ? data.prices : data;
         
-		if (!Array.isArray(pricesData)) {
+        if (!Array.isArray(pricesData)) {
             console.error("Invalid data structure received. Prices array missing.");
             container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ව්‍යුහය දෝෂ සහිතයි. Tiles පෙන්විය නොහැක.</p>`;
             hideLoader();
             return;
         }
-		
+        
+        // Grouping Logic: Tool Name එකට අනුව අඩුම මිල සොයයි
         const groupedData = pricesData.reduce((acc, item) => {
-            // Grouping Logic...
             const currentPrice = isReseller ? item.Reseller_Price_LKR : item.Customer_Price_LKR;
             
             if (!acc[item.Tool_Name] || currentPrice < acc[item.Tool_Name].minPrice) {
@@ -48,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tool = groupedData[toolName];
             const firstPlan = tool.firstPlan;
 
-            // ... (Copy Text Logic) ...
+            // Copy Text Logic: සියලුම Plans අඩංගු Text block එක සකස් කරයි
             const allPlansText = tool.plans.map(plan => {
                 const price = isReseller ? plan.Reseller_Price_LKR : plan.Customer_Price_LKR;
                 const priceLabel = isReseller ? 'Reseller Price' : 'Price';
@@ -58,9 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
                        `   Features: ${plan.Key_Features}`;
             }).join('\n\n');
 
+            // HTML Quotes සහ Line Breaks සඳහා Escape කරයි
             const safeAllPlansText = allPlansText.replace(/'/g, '’').replace(/\n/g, '\\n');
             
-            // ... (Tile HTML Generate Logic) ...
+            // Tile HTML Generate Logic:
             const copyButtonHtml = isReseller ? `
                 <button class="copy-all-btn" 
                         onclick="event.stopPropagation(); event.preventDefault(); copyToClipboard('${safeAllPlansText}')">
@@ -83,84 +92,31 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             container.innerHTML += tileHtml;
         }
-
-        // Cache එකෙන් Load කළා නම්, Loader එක hide කරලා පසුබිමින් Update කරන්න
-        if (isCached && isCached !== 'initial') {
-             // 💥 FIX 1: Loader එක hide කරන්න (index.js එකේදී පමණයි)
-             hideLoader(); 
-             // පසුබිමින් Update කිරීමේ ක්‍රියාවලිය වහාම ආරම්භ කරන්න
-             fetchLatestData(true); // true යැවීමෙන් Cache Update කරනවා
-        }
+        
+        // Render කිරීම අවසන් වූ පසු Loader එක Hide කරන්න
+        hideLoader();
     }
 
-    // පසුබිමින් අලුත් දත්ත Fetch කරන function එක
-    function fetchLatestData(isBackgroundUpdate = false) {
-        fetch(DATA_URL)
+    // ----------------------------------------------------
+    // 🔥 DATA FETCHING LOGIC (Cloudflare Worker)
+    // ----------------------------------------------------
+    
+    // Worker එකෙන් දත්ත අදින ප්‍රධාන Call එක
+    fetch(DATA_URL)
         .then(response => {
-            if (!response.ok) throw new Error('Network response not ok');
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return response.json();
         })
         .then(data => {
-            const cachedItem = localStorage.getItem(CACHE_KEY);
-            const currentCacheVersion = cachedItem ? JSON.parse(cachedItem).version : '0.0';
-
-            // Version එක Check කරන්න
-            if (!cachedItem || (data.version && data.version > currentCacheVersion)) {
-                // අලුත් දත්ත Cache කරන්න
-                const cacheData = {
-                    data: data.prices, // prices array එක විතරක් save කරන්න
-                    version: data.version,
-                    timestamp: Date.now()
-                };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-
-                // අලුත් දත්ත වලින් Page එක නැවත Render කරන්න
-                processAndRenderData(data, false); 
-            }
-            
-            // 🔥 FIX: Background Update එකක් නොවේ නම් Loader එක අයින් කරන්න
-            if (!isBackgroundUpdate) {
-                hideLoader(); 
-            }
-            
-            // Version Update වුණා නම් Toast එකක් දෙන්න
-            if (cachedItem && data.version > currentCacheVersion) {
-                showToast(`New prices (v${data.version}) updated!`);
-            }
-
+            // Data ලැබුණු පසු Render කරන්න
+            processAndRenderData(data);
         })
         .catch(error => {
-            console.error('Error fetching latest data:', error);
+            console.error('Error fetching data:', error);
             // Loader එක Hide කරන්න
             hideLoader();
-            // Cache එකක් නැත්නම් User ට error එක පෙන්වන්න
-            const cachedItem = localStorage.getItem(CACHE_KEY);
-            if (!cachedItem) {
-                container.innerHTML = `<p style="color: red; text-align: center;">අන්තර්ජාල සම්බන්ධතාව දෝෂ සහිතයි හෝ Apps Script URL වෙත පිවිසීමට නොහැක.</p>`;
-            }
+            container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. Cloudflare Worker හෝ Apps Script පරීක්ෂා කරන්න.</p>`;
         });
-    }
-
-    // මුලින්ම Cache එකෙන් දත්ත Load කිරීම
-    const cachedItem = localStorage.getItem(CACHE_KEY);
-    
-    if (cachedItem) {
-        const { data, timestamp, version } = JSON.parse(cachedItem);
-        const expiryTime = CACHE_EXPIRY;
-
-        if (Date.now() < timestamp + expiryTime) {
-            // Cache එක වලංගු නම්, ක්ෂණිකව Load කරලා, පසුබිමින් Update කරන්න
-            processAndRenderData({prices: data, version: version}, 'initial'); 
-            // Loader එක hide කරන්න (cache load වුණ නිසා)
-            hideLoader(); 
-        } else {
-            // Cache එක කල් ඉකුත් වෙලා නම්, අලුතින් Load කරන්න
-            fetchLatestData();
-        }
-    } else {
-        // Cache එකක් නැත්නම්, Loader එක තියලා අලුතින් Load කරන්න
-        fetchLatestData();
-    }
 });
 
 
