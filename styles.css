@@ -91,7 +91,7 @@ h1 {
 }
 
 .product-tile img {
-    width: 80px; /* Logo Size */
+    /*width: 80px;  Logo Size */
     height: 80px;
     object-fit: contain;
     margin-bottom: 5px;
@@ -217,14 +217,20 @@ h1 {
 
 /* Price */
 .price-section {
-    /* 🔥 FIX: Margin තව අඩු කිරීම (4px 0) */
     margin: 4px 0; 
-    line-height: 1; /* Line height අඩු කිරීම */
+    line-height: 1; 
+}
+
+.price-label {
+    font-size: 0.85em; 
+    color: #636366;
 }
 
 .price-value {
-    /* Font Size තවදුරටත් අඩු කිරීම */
-    font-size: 1.3em; 
+    font-size: 1.2em;
+	font-weight: 700;
+    color: #1c1c1e;
+    display: block;
 }
 
 /* Features and Status */
@@ -353,4 +359,5 @@ h1 {
     100% { transform: rotate(360deg); }
 
 }
+
 
