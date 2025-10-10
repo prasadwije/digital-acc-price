@@ -91,11 +91,17 @@ h1 {
 }
 
 .product-tile img {
-    width: 60px; /* Logo Size */
-    height: 60px;
+    width: 80px; /* Logo Size */
+    height: 80px;
     object-fit: contain;
-    margin-bottom: 10px;
-    border-radius: 10px;
+    margin-bottom: 5px;
+    border-radius: 16px;
+}
+
+.product-tile h3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0 0 5px 0; 
 }
 
 .summary-price {
@@ -347,3 +353,4 @@ h1 {
     100% { transform: rotate(360deg); }
 
 }
+
