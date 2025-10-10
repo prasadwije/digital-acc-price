@@ -12,6 +12,7 @@ body {
     line-height: 1.5; /* Line height අඩු කිරීම */
     color: #1c1c1e;
 	overflow-x: hidden;
+	touch-action: pan-x pan-y;
 }
 
 /* Header and Title */
@@ -344,4 +345,5 @@ h1 {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+
 }
