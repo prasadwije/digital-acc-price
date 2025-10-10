@@ -90,9 +90,10 @@ h1 {
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
-.product-tile img {
-    /*width: 80px;  Logo Size */
+.product-tile img { 
+	width: auto;
     height: 80px;
+	max-width: 160px;
     object-fit: contain;
     margin-bottom: 5px;
     border-radius: 16px;
@@ -359,5 +360,6 @@ h1 {
     100% { transform: rotate(360deg); }
 
 }
+
 
 
