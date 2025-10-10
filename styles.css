@@ -93,7 +93,7 @@ h1 {
 .product-tile img { 
 	width: auto;
     height: 80px;
-	max-width: 160px;
+	max-width: 120px;
     object-fit: contain;
     margin-bottom: 5px;
     border-radius: 16px;
@@ -360,6 +360,7 @@ h1 {
     100% { transform: rotate(360deg); }
 
 }
+
 
 
 
