@@ -179,7 +179,7 @@ h1 {
 .plan-card h2 {
     font-size: 1.2em; /* අකුරු ප්‍රමාණය තරමක් අඩු කිරීම */
     font-weight: 700;
-    margin: 5px 0; /* උඩ සහ යට margin එක 5px දක්වා අඩු කිරීම */
+    margin: 5px 0 15px 0; /* උඩ සහ යට margin එක 5px දක්වා අඩු කිරීම */
     line-height: 1.2;
 }
 
@@ -231,7 +231,46 @@ h1 {
     font-size: 1.2em;
 	font-weight: 700;
     color: #1c1c1e;
+    
+}
+
+/* 4. Reseller Normal Price Strikethrough */
+.original-price-display {
+    font-size: 0.9em; /* සාමාන්‍ය මිලට වඩා ටිකක් කුඩායි */
+    color: #ff3b30; /* Apple Red */
+    text-decoration: line-through; /* ඉරකින් කපනවා */
+    display: block; /* තනි පේළියකට යවයි */
+    font-weight: 500;
+    margin-left: 2px;
+}
+
+/* Reseller Price Section Layout */
+.reseller-price-row {
+    display: flex;
+    align-items: baseline;
     display: block;
+}
+
+.reseller-value {
+    color: #007a33; /* Reseller මිලට තද කොළ පාටක් දෙමු */
+    font-size: 1.4em !important; /* Reseller මිල ඉස්මතු කරයි */
+}
+
+.price-section {
+    margin: -5px 0; /* Vertical space අඩු කරයි */
+}
+
+/* 6. Customer Copy Buttons සම්පූර්ණයෙන්ම සඟවයි */
+.hidden-copy-btn {
+    /* 🔥 FIX 1: Opacity 0 කරලා පේන එක නවත්වනවා */
+    opacity: 0 !important;
+    /* 🔥 FIX 2: Mouse Events තවමත් වැඩ කරන්න අවසර දෙනවා (Click Event එකට) */
+    pointer-events: all !important; 
+    /* Button එකේ සැබෑ පිහිටීම තබා ගනී */
+    cursor: default;
+    
+    /* Z-Index එක අඩු කළ යුතුයි (වෙනත් Element Block නොකරන්න) */
+    z-index: 1; 
 }
 
 /* Features and Status */
@@ -360,7 +399,6 @@ h1 {
     100% { transform: rotate(360deg); }
 
 }
-
 
 
 

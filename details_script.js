@@ -1,14 +1,13 @@
 /**
- * Digital Account Price List - Details Page Script
- * Fetches data directly from the fast Cloudflare Worker and displays detailed plan cards for a single tool.
- * Local browser caching (localStorage) is NOT used, relying solely on Cloudflare cache.
+ * Digital Account Price List - Details Page Script (Final Clean Version)
+ * Fetches data from Cloudflare Proxy and displays detailed plan cards for a single tool.
+ * All Local Storage Caching Logic has been removed.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     // 🔥 1. CONFIGURATION VARIABLES
     const DATA_URL = 'https://price-list-cache-proxy.prasadsandaruwan85.workers.dev/';
-    // CACHE_KEY, CACHE_EXPIRY වැනි දේ අවශ්‍ය නැත.
-
+    
     const container = document.getElementById('plans-container');
     const toolNameHeader = document.getElementById('tool-name-header');
     
@@ -19,16 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const isReseller = role === 'reseller'; 
     
     // Back Link එක සකස් කිරීම
-    const backLink = document.querySelector('.back-link');
+    const backLink = document.querySelector('.back-link'); // Class එක භාවිත කරයි
     if (backLink) {
+        // Back Link එක නිවැරදි Reseller/Customer URL එකට යවයි
         backLink.href = isReseller ? 'index.html?role=reseller' : 'index.html';
     }
 
 
     if (!toolName) {
         toolNameHeader.textContent = 'වැරදි සබැඳිය (Invalid Link)';
-        container.innerHTML = `<p style="text-align: center;">විස්තර බැලීමට Tool එකක් තෝරන්න.</p>`;
-        hideLoader();
+        container.innerHTML = '<p style="text-align: center;">විස්තර බැලීමට Tool එකක් තෝරන්න.</p>';
+        hideLoader(); // Error එකකදී Loader එක Hide කරන්න
         return;
     }
 
@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // දත්ත පෙන්වන ප්‍රධාන function එක
     function renderPlans(data) {
-        // Apps Script එකෙන් prices array එක ගන්නවා (හෝ direct data)
         const pricesData = data.prices || data; 
 
         // 3. අදාළ Tool එකට විතරක් Plans Filter කිරීම
@@ -60,31 +59,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Cards Generate කිරීම
         plans.forEach(plan => {
-            // Role එකට අනුව පෙන්විය යුතු මිල තීරණය කිරීම
-            const price = isReseller ? plan.Reseller_Price_LKR : plan.Customer_Price_LKR;
-            const priceLabel = isReseller ? 'Reseller Price' : 'Price';
+            // Price Helper Function එකෙන් Price/Symbol ගන්නවා (script.js එකෙන් Load වේ)
+            const resellerPriceInfo = extractPriceAndSymbol(plan.Reseller_Price_LKR);
+            const customerPriceInfo = extractPriceAndSymbol(plan.Customer_Price_LKR);
 
-            const numericPrice = parseFloat(price);
+            const price = isReseller ? resellerPriceInfo.value : customerPriceInfo.value;
+            const symbol = isReseller ? resellerPriceInfo.symbol : customerPriceInfo.symbol;
             
-            // WhatsApp Message එක හදනවා
+            const priceLabel = isReseller ? 'Reseller' : 'Price';
+
+            const numericPrice = price;
+            const numericCustomerPrice = customerPriceInfo.value;
+            
+            // Symbol Prefix/Suffix Logic
+            const symbolIsPrefix = symbol.startsWith('$') || symbol.startsWith('€') || symbol.toLowerCase().startsWith('rs.');
+
+            const resellerDisplayPrice = symbolIsPrefix 
+                ? `${symbol}${numericPrice.toLocaleString('en-US')}`
+                : `${numericPrice.toLocaleString('en-US')}${symbol}`;
+            
+            const customerDisplayPrice = customerPriceInfo.symbol.startsWith('$') || customerPriceInfo.symbol.startsWith('€') || customerPriceInfo.symbol.toLowerCase().startsWith('rs.')
+                ? `${customerPriceInfo.symbol}${numericCustomerPrice.toLocaleString('en-US')}`
+                : `${numericCustomerPrice.toLocaleString('en-US')}${customerPriceInfo.symbol}`;
+
+
+            // -----------------------------------------------------------------
+            // 🔥 WhatsApp Message එක හදනවා
+            // -----------------------------------------------------------------
             let messageText = `Hello! I'd like to ${isReseller ? 'Reseller Order' : 'Buy'}: `;
-            messageText += `${plan.Tool_Name} | ${plan.Plan_Tier} (${plan.Subscription_Type}) | ${plan.Duration_Months} | LKR ${numericPrice.toLocaleString('en-US')} | Ref: #${plan.Unique_ID}\\n\\nPlease send me the payment details.`;
+            // Line break fix: \n එකක් වෙනුවට \\n ලෙස යැවිය යුතුයි
+            messageText += `${plan.Tool_Name} | ${plan.Plan_Tier} | ${plan.Duration_Months} | ${resellerDisplayPrice} | Ref: #${plan.Unique_ID}\n\nPlease send me the payment details.`;
             
             const encodedMessage = encodeURIComponent(messageText);
             const whatsappLink = `https://wa.me/94784653261?text=${encodedMessage}`;
             
-            // Reseller Copy Text (Single Plan)
-            const resellerAdText = `🌟 ${plan.Tool_Name} - ${plan.Plan_Tier} (${plan.Subscription_Type}) 🌟\\nDuration: ${plan.Duration_Months}\\nPrice: LKR ${numericPrice.toLocaleString('en-US')}\\nKey Features: ${plan.Key_Features}\\n\\n[Add Your Contact Details Here]`;
-            const safeResellerAdText = resellerAdText.replace(/'/g, '’'); // Single quotes වලින් escape කරයි
+            // 🔥 Reseller Copy Text (Tool Name එක උඩින්ම එකතු කරයි)
+            const toolNameHeading = `🔥 ${plan.Tool_Name} - Plan Details 🔥\\n\\n`; 
 
-            const copyButtonHtml = isReseller ? `
-                <button class="copy-plan-btn" 
-                        onclick="event.stopPropagation(); event.preventDefault(); copyToClipboard('${safeResellerAdText}')">
+            // Copy Text Body: Normal Price සහ Resell Price දෙකම ඇතුළත් කරයි
+            const resellerAdText = `${toolNameHeading}🌟 ${plan.Plan_Tier} (${plan.Subscription_Type}) 🌟\\n` +
+                                   `Duration: ${plan.Duration_Months}\\n` +
+                                   `Normal Price: ${customerDisplayPrice}\\n` + // FIX: Normal Price
+                                   `Your Price: ${resellerDisplayPrice}\\n` +    // FIX: Resell Price
+                                   `Key Features: ${plan.Key_Features}\\n\\n[Add Your Contact Details Here]`;
+            
+            // 💥 FIX: Copy Text එකේ Quotes (Single/Double) සහ Newlines (\\n) නිවැරදිව Escape කිරීම
+            const safeResellerAdText = resellerAdText.replace(/'/g, '\\\'').replace(/"/g, '\\"').replace(/\n/g, '\\n'); 
+
+
+            // 🔥 FIX 6: Copy Button HTML (Reseller & Customer Hidden Copy)
+            const copyButtonHtml = `
+                <button class="copy-plan-btn ${!isReseller ? 'hidden-copy-btn' : ''}" 
+                        onclick="event.stopPropagation(); event.preventDefault(); copyToClipboard('${safeResellerAdText}')"
+                        title="${isReseller ? 'Copy Plan Details' : 'Copy for Customer'}">
                     <svg class="copy-icon" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z"/>
                     </svg>
                 </button>
-            ` : '';
+            `;
 
             const cardHtml = `
                 <div class="plan-card ${plan.Subscription_Type.toLowerCase()}">
@@ -96,12 +128,27 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="duration">${plan.Duration_Months}</span>
                     </div>
                     
-                    <h2>${plan.Plan_Tier} Plan</h2>
+                    <h2>${plan.Plan_Tier}</h2>
                     
-                    <div class="price-section">
-                        <span class="price-label">${priceLabel}:</span>
-                        <span class="price-value">LKR ${numericPrice.toLocaleString('en-US')}</span>
-                    </div>
+                    <!-- 🔥 FINAL PRICE DISPLAY FIX START: Show Normal Price above Reseller Price -->
+                    ${isReseller ? 
+                        // Reseller නම්: Normal Price (Strikethrough) උඩින් පෙන්වයි
+                        `<div class="price-section">
+                            
+                            <span class="original-price-display">${customerDisplayPrice}</span>
+                        </div>
+                        <div class="reseller-price-row">
+                            <span class="price-label">${priceLabel}:</span>
+                            <span class="price-value reseller-value">${resellerDisplayPrice}</span>
+                        </div>`
+                        :
+                        // Customer නම්: එක් පේළියක් පමණක් පෙන්වයි
+                        `<div class="price-section">
+                            <span class="price-label">${priceLabel}:</span>
+                            <span class="price-value">${resellerDisplayPrice}</span>
+                        </div>`
+                    }
+                    <!-- FINAL PRICE DISPLAY FIX END -->
                     
                     <div class="features-section">
                         <p>${plan.Key_Features}</p>
@@ -116,28 +163,30 @@ document.addEventListener('DOMContentLoaded', () => {
             container.innerHTML += cardHtml;
         });
         
-        // Render කිරීම අවසන් වූ පසු Loader එක Hide කරන්න
+        // Render වුණාට පස්සේ Loader එක Hide කරනවා
         hideLoader();
     }
 
     // ----------------------------------------------------
-    // 🔥 DATA FETCHING LOGIC (Cloudflare Worker)
+    // FINAL FETCH LOGIC (Cloudflare Caching)
     // ----------------------------------------------------
     
-    // Worker එකෙන් දත්ත අදින ප්‍රධාන Call එක
+    // Cache එකක් තිබුණත් නැතත්, අලුත් දත්ත Fetch කරන්න.
     fetch(DATA_URL)
         .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) throw new Error('Network response not ok');
             return response.json();
         })
         .then(data => {
-            // Data ලැබුණු පසු Render කරන්න
+            // Data ලැබුණාට පස්සේ Render කරනවා
             renderPlans(data);
         })
         .catch(error => {
             console.error('Error fetching data:', error);
-            // Loader එක Hide කරන්න
-            hideLoader();
-            container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. කරුණාකර පසුව උත්සාහ කරන්න.</p>`;
+            container.innerHTML = `<p style="color: red; text-align: center;">දත්ත ලබා ගැනීමේ දෝෂයක්. Cloudflare Cache එක පරීක්ෂා කරන්න.</p>`;
+        })
+        .finally(() => {
+             // Loader එක Hide කරන්න
+             hideLoader();
         });
 });
