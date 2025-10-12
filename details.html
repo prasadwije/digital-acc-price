@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title id="detail-title">Tool Details</title>
+    <link rel="manifest" href="/manifest.json">
 	<meta name="robots" content="noindex, nofollow">
 	<link rel="icon" type="image/png" href="favicon.svg" sizes="32x32">
     <link rel="stylesheet" href="styles.css"> 
@@ -17,18 +18,19 @@
         <a href="index.html" class="back-link">← Back to Home</a>
         <h1 id="tool-name-header"></h1>
     </header>
-    
-    <!-- Plans ටික පෙන්වන්න Div එකක් -->
     <main id="plans-container" class="plan-cards-grid"></main>
-
-    <!-- 💡 Toast Notification Element එක -->
     <div id="toast-notification"></div>
-
-    <!-- 1. Global Function එක (copyToClipboard) තියෙන file එක මුලින්ම link කරන්න -->
     <script src="script.js"></script> 
-    
-    <!-- 2. ඒ function එක පාවිච්චි කරන file එක ඊට පස්සේ link කරන්න -->
-    <script src="details_script.js"></script> 
+    <script src="details_script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+              .then(registration => console.log('SW registered: ', registration))
+              .catch(registrationError => console.log('SW registration failed: ', registrationError));
+          });
+        }
+    </script> 
 </body>
 </html>
 

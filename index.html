@@ -4,33 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Digital Accounts Price List</title>
+    <link rel="manifest" href="/manifest.json">
 	<meta name="robots" content="noindex, nofollow">
 	<link rel="icon" type="image/png" href="favicon.svg" sizes="32x32">
-    <!-- CSS file එක link කිරීම -->
     <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
-	
 	<div id="loading-screen">
 		<div class="loader-spinner"></div>
 		<p>Loading Price Data...</p>
 	</div>
-
     <header>
         <h1 id="page-title">Price List</h1>
     </header>
-	
-	
-    
-    
     <main id="products-container" class="tiles-grid"></main>
-
     <div id="toast-notification"></div>
-
     <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+              .then(registration => console.log('SW registered: ', registration))
+              .catch(registrationError => console.log('SW registration failed: ', registrationError));
+          });
+        }
+    </script>
 </body>
 </html>
-
 
 
 
