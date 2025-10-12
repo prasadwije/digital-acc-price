@@ -1,20 +1,25 @@
 {
-  "name": "Digital Accounts Price List",
-  "short_name": "Digital Prices",
-  "description": "Quick access to shared and private digital account prices.",
-  "start_url": "/index.html",
+  "name": "Digital Price List",
+  "short_name": "Prices",
+  "description": "Exclusive Price List for Digital Accounts",
+  "start_url": "/digital-acc-price/index.html",
   "display": "standalone",
   "background_color": "#f5f5f7",
   "theme_color": "#007aff",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/digital-acc-price/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/favicon.png",
+      "src": "/digital-acc-price/icon-512x512.png",
       "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/digital-acc-price/favicon.png",
+      "sizes": "32x32",
       "type": "image/png"
     }
   ]
